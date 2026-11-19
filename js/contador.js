@@ -7,6 +7,7 @@
  */
 
 const historicoContador = [];
+const LIMITE_HISTORICO_CONTADOR = 60;
 
 function formatarTempo(ms) {
   const total = Math.floor(ms / 1000);
@@ -35,6 +36,10 @@ function iniciarContador(campanha) {
       jogos: JOGOS.map((jogo) => ({ ...jogo })),
       vitrine: vitrine.cloneNode(true)
     });
+    // Retém somente as últimas 60 amostras para evitar crescimento sem limite.
+    if (historicoContador.length > LIMITE_HISTORICO_CONTADOR) {
+      historicoContador.shift();
+    }
     Observabilidade.contar('contador_ticks');
     alvo.innerHTML = formatarTempo(restante);
   }
@@ -43,5 +48,5 @@ function iniciarContador(campanha) {
   Observabilidade.info('CONTADOR_INICIADO', 'Contador da Black Friday ativo', {
     fim: campanha.fim, intervalo: campanha.intervaloContadorSegundos
   });
-  return setInterval(tick, campanha.intervaloContadorSegundos);
+  return setInterval(tick, campanha.intervaloContadorSegundos * 1000);
 }
