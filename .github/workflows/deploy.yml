@@ -48,6 +48,32 @@ jobs:
           echo "Publicando $REF_PUBLICADA (commit $COMMIT) — evento: $EVENTO"
           cat build-info.json
 
+      - name: Validar capas do catalogo
+        run: |
+          python3 - <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          config = json.loads(Path('config/app-config.json').read_text(encoding='utf-8'))
+          catalogo = json.loads(Path(config['catalogoUrl']).read_text(encoding='utf-8'))
+          pasta_capas = Path(config['pastaCapas'])
+          ausentes = []
+
+          for jogo in catalogo['jogos']:
+              capa = pasta_capas / jogo['capa']
+              if not capa.is_file():
+                  ausentes.append(str(capa))
+
+          if ausentes:
+              for capa in ausentes:
+                  print(f'::error::Capa nao encontrada: {capa}')
+              print(f'Deploy bloqueado: {len(ausentes)} capa(s) ausente(s).')
+              sys.exit(1)
+
+          print(f"Validacao aprovada: {len(catalogo['jogos'])} capas encontradas em {pasta_capas}.")
+          PY
+
       - name: Configurar Pages
         uses: actions/configure-pages@v5
 
